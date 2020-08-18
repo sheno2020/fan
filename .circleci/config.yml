@@ -43,6 +43,7 @@ jobs:
           command: |
             cd backend
             npm i
+            yarn add --dev jest
             yarn add --dev jest-junit
             yarn test --ci --runInBand --reporters=default --reporters=jest-junit
      
@@ -100,6 +101,7 @@ jobs:
           command: |
             cd frontend
             npm i
+            yarn add --dev jest
             yarn add --dev jest-junit
             yarn test --ci --runInBand --reporters=default --reporters=jest-junit
         
