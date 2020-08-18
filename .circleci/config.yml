@@ -1,6 +1,8 @@
 version: 2.1
 
 jobs:
+# =========================================================================================================
+# BUILD
   backend_build:
     docker:
       - image: circleci/node:13.8.0
@@ -8,7 +10,6 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            # when lock file changes, use increasingly general patterns to restore cache
             - back-end
   
       - run:
@@ -20,19 +21,40 @@ jobs:
           
       - save_cache:
           paths:
-            - backend/node_modules  # location depends on npm version
+            - backend/node_modules 
           key: back-end
 
+  frontend_build:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - front-end
 
+      - run:
+          name: Build frontend
+          command: |
+            cd frontend
+            npm i
+            npm run build
+          
+      - save_cache:
+          paths:
+            - frontend/node_modules
+          key: front-end
+  
+# =======================================================================================================
+# TEST
   backend_tests:
     docker:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      # - restore_cache:
-      #     keys:
-      #       # when lock file changes, use increasingly general patterns to restore cache
-      #       - back-end
+      - restore_cache:
+          keys:
+            - back-end
      
       - run:
           name: Run tests with JUnit as reporter
@@ -48,34 +70,10 @@ jobs:
           path: backend/test-results/junit/junit.xml
     
             
-      # - save_cache:
-      #     paths:
-      #       - backend/node_modules  # location depends on npm version
-      #     key: back-end
-
-  frontend_build:
-    docker:
-      - image: circleci/node:13.8.0
-    steps:
-      - checkout
-      - restore_cache:
-          keys:
-            # when lock file changes, use increasingly general patterns to restore cache
-            - front-end
-
-      - run:
-          name: Build frontend
-          command: |
-            cd frontend
-            npm i
-            npm run build
-          
       - save_cache:
           paths:
-            - frontend/node_modules  # location depends on npm version
-          key: front-end
-  
-
+            - backend/node_modules 
+          key: back-end
 
   frontend_tests:
     docker:
@@ -84,7 +82,6 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            # when lock file changes, use increasingly general patterns to restore cache
             - front-end
 
       - run:
@@ -102,19 +99,65 @@ jobs:
           
       - save_cache:
           paths:
-            - frontend/node_modules  # location depends on npm version
+            - frontend/node_modules  
           key: front-end
-        
+# =========================================================================================================
+# ANALYZE
+  audit-backend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: 
+            - back-end
+      - run:
+          name: Scan backend dependencies
+          command: |
+            cd backend
+            npm i
+            npm audit --audit-level=critical
+
+
+  audit-frontend:
+    docker:
+      - image: circleci/node:13.8.0
+    steps:
+      - checkout
+      - restore_cache:
+          keys: 
+            - front-end
+      - run:
+          name: Scan frontend dependencies
+          command: |
+            cd frontend
+            npm i
+            npm audit --audit-level=critical
+
+
 
 workflows:
   default:
     jobs:
       - backend_build
       - frontend_build
+      
       - backend_tests:
           requires: 
             - backend_build
       - frontend_tests:
           requires: 
             - frontend_build
+
+      - audit-backend:
+          requires:
+            - backend_tests
+      - audit-frontend:
+          requires:
+            - frontend_tests
+      
+
+
+
+             
 
