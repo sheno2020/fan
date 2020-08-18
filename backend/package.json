@@ -114,5 +114,9 @@
     "testEnvironment": "node",
     "verbose": false,
     "reporters":["default","jest-junit"]
+  },
+  "jest-junit": {
+    "outputDirectory": "test-results/junit",
+    "outputName": "junit.xml"
   }
 }

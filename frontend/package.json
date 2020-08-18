@@ -142,5 +142,9 @@
     },
     "reporters":["default","jest-junit"]
   },
+  "jest-junit": {
+    "outputDirectory": "test-results/junit",
+    "outputName": "junit.xml"
+  },
   "homepage": "http://mywebsite.com/relativepath"
 }
