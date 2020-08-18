@@ -43,12 +43,16 @@ jobs:
           name: Run tests with JUnit as reporter
           command: |
             cd backend
+            mkdir -p test-results/junit
             yarn add --dev jest-junit
             yarn test --ci --runInBand --reporters=default --reporters=jest-junit
+          environment:
+            JEST_JUNIT_OUTPUT_DIR: ./backend/test-results/
+
       - store_test_results:
-          path: backend/junit.xml
+          path: backend/test-results/junit/junit.xml
       - store_artifacts:
-          path: backend/junit.xml
+          path: backend/test-results/junit/junit.xml
     
             
       - save_cache:
