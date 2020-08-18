@@ -42,6 +42,7 @@ jobs:
           name: Run tests with JUnit as reporter
           command: |
             cd backend
+            npm i
             mkdir -p test-results/junit
             yarn add --dev jest-junit
             yarn test --ci --runInBand --reporters=default --reporters=jest-junit
@@ -99,6 +100,7 @@ jobs:
           name: Run tests with JUnit as reporter
           command: |
             cd frontend
+            npm i
             mkdir -p test-results/junit
             yarn add --dev jest-junit
             yarn test --ci --runInBand --reporters=default --reporters=jest-junit
