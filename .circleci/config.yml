@@ -1,5 +1,18 @@
 version: 2.1
 
+orbs:
+  slack: circleci/slack@3.4.2
+
+commands:
+  slack-notify:
+    when: on_fail   
+    steps:
+      - slack/notify:
+          color: "#42e2f4"
+          mentions: "ozayr,"
+          message: just a message
+
+
 jobs:
 # =========================================================================================================
 # BUILD
@@ -91,7 +104,9 @@ jobs:
             npm i
             npm add --dev jest-junit
             npm run test --reporters=jest-junit
-        
+      
+      - slack-notify
+
       - store_test_results:
           path: frontend/test-results
       - store_artifacts:
