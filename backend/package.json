@@ -112,6 +112,7 @@
       "!src/*.ts"
     ],
     "testEnvironment": "node",
-    "verbose": false
+    "verbose": false,
+    "reporters":["default","jest-junit"]
   }
 }

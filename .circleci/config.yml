@@ -1,17 +1,128 @@
 version: 2.1
 
 jobs:
-  hello-world:
+  backend_build:
     docker:
-      - image: amazon/aws-cli
+      - image: circleci/node
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            # when lock file changes, use increasingly general patterns to restore cache
+            - backend-dep-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+            - backend-dep-v1-{{ .Branch }}-
+            - backend-dep-v1-
+  
       - run:
-          name: Say Hello
+          name: Build backend
           command: |
-            echo "Hello World"
+            cd backend
+            npm i
+            npm run build
+          
+      - save_cache:
+          paths:
+            - backend/node_modules  # location depends on npm version
+          key: backend-dep-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+
+
+  backend_tests:
+    docker:
+      - image: circleci/node
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            # when lock file changes, use increasingly general patterns to restore cache
+            - backend-dep-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+            - backend-dep-v1-{{ .Branch }}-
+            - backend-dep-v1-
+     
+
+      - run:
+          name: Run tests with JUnit as reporter
+          command: |
+            cd backend
+            yarn add --dev jest-junit
+            yarn test --ci --runInBand --reporters=default --reporters=jest-junit
+      - store_test_results:
+          path: backend/junit.xml
+      - store_artifacts:
+          path: backend/junit.xml
+    
+            
+      - save_cache:
+          paths:
+            - backend/node_modules  # location depends on npm version
+          key: backend-dep-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+
+  frontend_build:
+    docker:
+      - image: circleci/node
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            # when lock file changes, use increasingly general patterns to restore cache
+            - frontend-dep-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+            - frontend-dep-v1-{{ .Branch }}-
+            - frontend-dep-v1-
+
+      - run:
+          name: Build frontend
+          command: |
+            cd frontend
+            npm i
+            npm run build
+          
+      - save_cache:
+          paths:
+            - frontend/node_modules  # location depends on npm version
+          key: frontend-dep-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+  
+
+
+  frontend_tests:
+    docker:
+      - image: circleci/node
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            # when lock file changes, use increasingly general patterns to restore cache
+            - frontend-dep-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+            - frontend-dep-v1-{{ .Branch }}-
+            - frontend-dep-v1-
+
+      - run:
+          name: run frontend tests
+          command: |
+            cd frontend
+            npm add --only=dev jest-junit
+            npm test --ci --runInBand --reporters=default --reporters=jest-junit
+          environment:
+            JEST_JUNIT_OUTPUT_DIR: ./reports/junit
+
+      - store_test_results:
+          path: ./reports/junit
+      # - store_artifacts:
+      #     path: ./reports/junit
+          
+      - save_cache:
+          paths:
+            - frontend/node_modules  # location depends on npm version
+          key: frontend-dep-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+        
 
 workflows:
   default:
     jobs:
-      - hello-world
+      - backend_build
+      # - frontend_build
+      - backend_tests:
+          requires: 
+            - backend_build
+      # - frontend_tests:
+      #     requires: 
+      #       - frontend_build
+
