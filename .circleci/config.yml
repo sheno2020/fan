@@ -38,7 +38,6 @@ jobs:
             - backend-dep-v1-{{ .Branch }}-
             - backend-dep-v1-
      
-
       - run:
           name: Run tests with JUnit as reporter
           command: |
@@ -47,7 +46,7 @@ jobs:
             yarn add --dev jest-junit
             yarn test --ci --runInBand --reporters=default --reporters=jest-junit
           environment:
-            JEST_JUNIT_OUTPUT_DIR: ./backend/test-results/
+            JEST_JUNIT_OUTPUT_DIR: ./backend/test-results/junit/
 
       - store_test_results:
           path: backend/test-results/junit/junit.xml
@@ -99,18 +98,19 @@ jobs:
             - frontend-dep-v1-
 
       - run:
-          name: run frontend tests
+          name: Run tests with JUnit as reporter
           command: |
             cd frontend
-            npm add --only=dev jest-junit
-            npm test --ci --runInBand --reporters=default --reporters=jest-junit
+            mkdir -p test-results/junit
+            yarn add --dev jest-junit
+            yarn test --ci --runInBand --reporters=default --reporters=jest-junit
           environment:
-            JEST_JUNIT_OUTPUT_DIR: ./reports/junit
+            JEST_JUNIT_OUTPUT_DIR: ./frontend/test-results/junit/
 
       - store_test_results:
-          path: ./reports/junit
-      # - store_artifacts:
-      #     path: ./reports/junit
+          path: frontend/test-results/junit/junit.xml
+      - store_artifacts:
+          path: frontend/test-results/junit/junit.xml
           
       - save_cache:
           paths:
@@ -122,11 +122,11 @@ workflows:
   default:
     jobs:
       - backend_build
-      # - frontend_build
+      - frontend_build
       - backend_tests:
           requires: 
             - backend_build
-      # - frontend_tests:
-      #     requires: 
-      #       - frontend_build
+      - frontend_tests:
+          requires: 
+            - frontend_build
 
