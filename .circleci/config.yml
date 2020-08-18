@@ -29,19 +29,18 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            # when lock file changes, use increasingly general patterns to restore cache
-            - back-end
+      # - restore_cache:
+      #     keys:
+      #       # when lock file changes, use increasingly general patterns to restore cache
+      #       - back-end
      
       - run:
           name: Run tests with JUnit as reporter
           command: |
             cd backend
             npm i
-            yarn add --dev jest
-            yarn add --dev jest-junit
-            yarn test --ci --runInBand --reporters=default --reporters=jest-junit
+            npm add --dev jest-junit
+            npm run test --reporters=jest-junit
      
       - store_test_results:
           path: backend/test-results
@@ -49,10 +48,10 @@ jobs:
           path: backend/test-results/junit/junit.xml
     
             
-      - save_cache:
-          paths:
-            - backend/node_modules  # location depends on npm version
-          key: back-end
+      # - save_cache:
+      #     paths:
+      #       - backend/node_modules  # location depends on npm version
+      #     key: back-end
 
   frontend_build:
     docker:
@@ -93,8 +92,8 @@ jobs:
           command: |
             cd frontend
             npm i
-            yarn add --dev jest-junit
-            yarn test --ci --runInBand --reporters=default --reporters=jest-junit
+            npm add --dev jest-junit
+            npm run test --reporters=jest-junit
         
       - store_test_results:
           path: frontend/test-results
