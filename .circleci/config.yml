@@ -9,9 +9,7 @@ jobs:
       - restore_cache:
           keys:
             # when lock file changes, use increasingly general patterns to restore cache
-            - backend-dep-v2-{{ .Branch }}-{{ checksum "package-lock.json" }}
-            - backend-dep-v2-{{ .Branch }}-
-            - backend-dep-v2-
+            - back-end
   
       - run:
           name: Build backend
@@ -23,7 +21,7 @@ jobs:
       - save_cache:
           paths:
             - backend/node_modules  # location depends on npm version
-          key: backend-dep-v2-{{ .Branch }}-{{ checksum "package-lock.json" }}
+          key: back-end
 
 
   backend_tests:
@@ -34,9 +32,7 @@ jobs:
       - restore_cache:
           keys:
             # when lock file changes, use increasingly general patterns to restore cache
-            - backend-dep-v2-{{ .Branch }}-{{ checksum "package-lock.json" }}
-            - backend-dep-v2-{{ .Branch }}-
-            - backend-dep-v2-
+            - back-end
      
       - run:
           name: Run tests with JUnit as reporter
@@ -56,7 +52,7 @@ jobs:
       - save_cache:
           paths:
             - backend/node_modules  # location depends on npm version
-          key: backend-dep-v2-{{ .Branch }}-{{ checksum "package-lock.json" }}
+          key: back-end
 
   frontend_build:
     docker:
@@ -66,9 +62,7 @@ jobs:
       - restore_cache:
           keys:
             # when lock file changes, use increasingly general patterns to restore cache
-            - frontend-dep-v2-{{ .Branch }}-{{ checksum "package-lock.json" }}
-            - frontend-dep-v2-{{ .Branch }}-
-            - frontend-dep-v2-
+            - front-end
 
       - run:
           name: Build frontend
@@ -80,7 +74,7 @@ jobs:
       - save_cache:
           paths:
             - frontend/node_modules  # location depends on npm version
-          key: frontend-dep-v2-{{ .Branch }}-{{ checksum "package-lock.json" }}
+          key: front-end
   
 
 
@@ -92,16 +86,13 @@ jobs:
       - restore_cache:
           keys:
             # when lock file changes, use increasingly general patterns to restore cache
-            - frontend-dep-v2-{{ .Branch }}-{{ checksum "package-lock.json" }}
-            - frontend-dep-v2-{{ .Branch }}-
-            - frontend-dep-v2-
+            - front-end
 
       - run:
           name: Run tests with JUnit as reporter
           command: |
             cd frontend
             npm i
-            yarn add --dev jest
             yarn add --dev jest-junit
             yarn test --ci --runInBand --reporters=default --reporters=jest-junit
         
@@ -113,7 +104,7 @@ jobs:
       - save_cache:
           paths:
             - frontend/node_modules  # location depends on npm version
-          key: frontend-dep-v2-{{ .Branch }}-{{ checksum "package-lock.json" }}
+          key: front-end
         
 
 workflows:
