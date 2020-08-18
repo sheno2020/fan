@@ -47,7 +47,7 @@ jobs:
             yarn test --ci --runInBand --reporters=default --reporters=jest-junit
      
       - store_test_results:
-          path: backend/test-results/junit/junit.xml
+          path: backend/test-results
       - store_artifacts:
           path: backend/test-results/junit/junit.xml
     
@@ -102,11 +102,9 @@ jobs:
             mkdir -p test-results/junit
             yarn add --dev jest-junit
             yarn test --ci --runInBand --reporters=default --reporters=jest-junit
-          environment:
-            JEST_JUNIT_OUTPUT_DIR: ./frontend/test-results/junit/
-
+        
       - store_test_results:
-          path: frontend/test-results/junit/junit.xml
+          path: frontend/test-results
       - store_artifacts:
           path: frontend/test-results/junit/junit.xml
           
