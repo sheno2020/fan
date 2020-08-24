@@ -113,13 +113,14 @@ jobs:
           paths:
             - frontend/node_modules  
           key: front-end
-          
-      - slack/notify:
+
+      - slack/status:
           channel: cicd-pipeline
           color: "#42e2f4"
           mentions: "ozayr,"
           message: just a message
           fail_only: true
+          
 # =========================================================================================================
 # ANALYZE
   audit-backend:
