@@ -11,6 +11,43 @@ commands:
           mentions: "ozayr,"
           fail_only: true
 
+  destroy_environment:
+    description: Destroy backend and frontend cloudformation stacks given a workflow ID.
+    parameters:
+      workflow_id:
+        type: string
+    steps:
+      - run:
+          when: on_fail
+          name: Destroy front end
+          command: |
+            aws s3 rm s3://udapeople-<< parameters.workflow_id >> --recursive
+            aws cloudformation delete-stack --stack-name "frontend-<< parameters.workflow_id >>"
+      - run:
+          when: on_fail
+          name: Destroy back end
+          command: |
+            aws cloudformation delete-stack --stack-name "backend-<< parameters.workflow_id >>"
+    
+
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+    parameters:
+      workflow_id:
+        type: string
+    steps:
+      - run:
+          name: Revert migrations
+          when: on_fail
+          command: |
+            cd backend
+            npm run build
+            npm run migrations:revert
+      - destroy_environment:
+          workflow_id: << parameters.workflow_id >>
+          event: on_fail
+  
+
 jobs:
 # =========================================================================================================
 # BUILD
@@ -21,7 +58,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - back-end
+            - back-end-{{ checksum "package.json" }}
   
       - run:
           name: Build backend
@@ -33,7 +70,7 @@ jobs:
       - save_cache:
           paths:
             - backend/node_modules 
-          key: back-end
+          key: back-end-{{ checksum "package.json" }}
 
   frontend_build:
     docker:
@@ -42,7 +79,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - front-end
+            - front-end-{{ checksum "package.json" }}
 
       - run:
           name: Build frontend
@@ -54,7 +91,7 @@ jobs:
       - save_cache:
           paths:
             - frontend/node_modules
-          key: front-end
+          key: front-end-{{ checksum "package.json" }}
   
 # =======================================================================================================
 # TEST
@@ -65,7 +102,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - back-end
+            - back-end-{{ checksum "package.json" }}
      
       - run:
           name: Run tests with JUnit as reporter
@@ -83,7 +120,7 @@ jobs:
       - save_cache:
           paths:
             - backend/node_modules 
-          key: back-end
+          key: back-end-{{ checksum "package.json" }}
 
   frontend_tests:
     docker:
@@ -92,7 +129,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - front-end
+            - front-end-{{ checksum "package.json" }}
 
       - run:
           name: Run tests with JUnit as reporter
@@ -109,7 +146,7 @@ jobs:
       - save_cache:
           paths:
             - frontend/node_modules  
-          key: front-end
+          key: front-end-{{ checksum "package.json" }}
 
       - slack-notify
           
@@ -122,13 +159,17 @@ jobs:
       - checkout
       - restore_cache:
           keys: 
-            - back-end
+            - back-end-{{ checksum "package.json" }}
       - run:
           name: Scan backend dependencies
           command: |
             cd backend
-            npm i
             npm audit --audit-level=critical
+
+      - save_cache:
+          paths:
+            - backend/node_modules  
+          key: back-end-{{ checksum "package.json" }}
 
 
   audit-frontend:
@@ -138,15 +179,18 @@ jobs:
       - checkout
       - restore_cache:
           keys: 
-            - front-end
+            - front-end-{{ checksum "package.json" }}
       - run:
           name: Scan frontend dependencies
           command: |
             cd frontend
-            npm i
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
-
+      
+      - save_cache:
+          paths:
+            - frontend/node_modules  
+          key: front-end-{{ checksum "package.json" }}
 # =================================================================================================
 # INFRASTRUCTURE 
 
@@ -159,17 +203,23 @@ jobs:
       - run:
           name: create backend infrastructure 
           command: |
-            aws cloudformation deploy --template-file .circleci/files/backend.yml --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" --parameter-overrides ID="backend-${CIRCLE_WORKFLOW_ID:0:7}"
-    
+            aws cloudformation deploy --template-file .circleci/files/backend.yml \
+            --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --parameter-overrides ID="backend-${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           name: create frontend infrastructure
           command: |
-            aws cloudformation deploy --template-file .circleci/files/frontend.yml --stack-name "frontend-${CIRCLE_WORKFLOW_ID:0:7}" --parameter-overrides ID="frontend-${CIRCLE_WORKFLOW_ID:0:7}"
+            aws cloudformation deploy --template-file .circleci/files/frontend.yml \
+            --stack-name "frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --parameter-overrides ID="frontend-${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           name: get public IP of EC2 instance created
           command: |
             echo "[all]" > inventory
-            aws cloudformation describe-stacks --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" --query "Stacks[0].Outputs[?OutputKey==\`DNSName\`].OutputValue" --output text >> inventory
+            aws cloudformation describe-stacks \
+            --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --query "Stacks[0].Outputs[?OutputKey==\`DNSName\`].OutputValue" \
+            --output text >> inventory
       - run: yum install -y tar gzip
       - persist_to_workspace:
           root: ./
@@ -185,17 +235,100 @@ jobs:
       - add_ssh_keys:
           fingerprints: [4b:f1:26:7f:1d:41:42:74:00:af:56:b0:10:e8:b0:e8]
       - checkout
+      - restore_cache:
+          keys: 
+            - back-end-{{ checksum "package.json" }}
+
       - run: apk add tar gzip
       - attach_workspace:
           at: ./
       - run:
-          name: Install ansible
+          name: Install dependencies and run build to generate dist folder to copy into remote server 
+          command: | 
+            apk add --update ansible nodejs npm && \
+            cd backend && \
+            npm run build 
+      - run: 
+          name: Configure server using ansible playbook
+          command: ansible-playbook -i inventory .circleci/ansible/configure_backend.yml
+          environment:
+            ANSIBLE_HOST_KEY_CHECKING: False
+ 
+  run-migrations:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - restore_cache:
+          keys: 
+            - back-end-{{ checksum "package.json" }}
+      - run:
+          name: Install dependencies
+          command: |
+            pip install awscli && apk add --update nodejs npm
+      - run: |
+          cd backend && \
+          npm run build && \
+          npm run migrations
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+
+# =======================================================================================================
+# DEPLOY
+  deploy-backend:
+    docker:
+    - image: python:3.7-alpine3.11
+    steps:
+      - add_ssh_keys:
+          fingerprints: [4b:f1:26:7f:1d:41:42:74:00:af:56:b0:10:e8:b0:e8]
+      - checkout
+      - restore_cache:
+          keys: 
+            - back-end-{{ checksum "package.json" }}
+
+      - run: apk add tar gzip
+      - attach_workspace:
+          at: ./
+      - run:
+          name: Install dependencies
           command: | 
             apk add --update ansible 
       - run: 
-          name: Configure server using ansible playbook
-          command: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory .circleci/ansible/configure.yml
-      - destroy_backend_stack
+          name: deploy server using ansible playbook
+          command: ansible-playbook -i inventory .circleci/ansible/deploy_backend.yml
+          environment:
+            ANSIBLE_HOST_KEY_CHECKING: False 
+            
+      - rollback-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+
+  deploy-frontend:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - add_ssh_keys:
+          fingerprints: [4b:f1:26:7f:1d:41:42:74:00:af:56:b0:10:e8:b0:e8]
+      - checkout
+      - restore_cache:
+          keys: 
+            - back-end-{{ checksum "package.json" }}
+      - run:
+          name: Install dependencies
+          command: |
+            pip install awscli && \
+            apk add --update nodejs npm 
+      - run:
+          name: Build frontend
+          command: |
+            export API_URL=$(aws cloudformation describe-stacks \
+            --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --query "Stacks[0].Outputs[?OutputKey==\`DNSName\`].OutputValue" \
+            --output text)
+            cd frontend
+            npm run build
+            aws s3 sync "dist/" s3://udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
+      - rollback-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
 
 workflows:
@@ -222,6 +355,16 @@ workflows:
           requires:
             - audit-backend
             - audit-frontend
+
+      - configure-infrastructure:
+          requires:
+            - deploy-infrastructure
+
+      - run-migrations:
+         requires:
+          - configure-infrastructure
+
+      
 
       
 

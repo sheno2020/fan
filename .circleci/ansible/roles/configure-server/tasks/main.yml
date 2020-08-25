@@ -38,6 +38,3 @@
     src: "~/project/backend/dist/"
     dest: "~/web"
 
-- name: Executing node
-  shell: |
-    pm2 start ~/web/index.js -f

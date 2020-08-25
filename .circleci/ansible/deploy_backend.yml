@@ -1,4 +1,4 @@
-- name: Configure backend server
+- name: deploy backend server
   hosts: all
   user: ubuntu
   environment:
@@ -11,5 +11,4 @@
     TYPEORM_PASSWORD: {$TYPEORM_PASSWORD}
     TYPEORM_DATABASE: {$TYPEORM_DATABASE}
   roles:
-  - configure-server
-  # - configure-prometheus-node-exporter
+    - deploy
