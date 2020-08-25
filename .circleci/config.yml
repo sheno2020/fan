@@ -58,7 +58,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - back-end-{{ checksum "package.json" }}
+            - back-end-{{ checksum "backend/package.json" }}
   
       - run:
           name: Build backend
@@ -70,7 +70,7 @@ jobs:
       - save_cache:
           paths:
             - backend/node_modules 
-          key: back-end-{{ checksum "package.json" }}
+          key: back-end-{{ checksum "backend/package.json" }}
 
   frontend_build:
     docker:
@@ -79,7 +79,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - front-end-{{ checksum "package.json" }}
+            - front-end-{{ checksum "frontend/package.json" }}
 
       - run:
           name: Build frontend
@@ -91,7 +91,7 @@ jobs:
       - save_cache:
           paths:
             - frontend/node_modules
-          key: front-end-{{ checksum "package.json" }}
+          key: front-end-{{ checksum "frontend/package.json" }}
   
 # =======================================================================================================
 # TEST
@@ -102,7 +102,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - back-end-{{ checksum "package.json" }}
+            - back-end-{{ checksum "backend/package.json" }}
      
       - run:
           name: Run tests with JUnit as reporter
@@ -120,7 +120,7 @@ jobs:
       - save_cache:
           paths:
             - backend/node_modules 
-          key: back-end-{{ checksum "package.json" }}
+          key: back-end-{{ checksum "backend/package.json" }}
 
   frontend_tests:
     docker:
@@ -129,7 +129,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - front-end-{{ checksum "package.json" }}
+            - front-end-{{ checksum "frontend/package.json" }}
 
       - run:
           name: Run tests with JUnit as reporter
@@ -146,7 +146,7 @@ jobs:
       - save_cache:
           paths:
             - frontend/node_modules  
-          key: front-end-{{ checksum "package.json" }}
+          key: front-end-{{ checksum "frontend/package.json" }}
 
       - slack-notify
           
@@ -159,7 +159,7 @@ jobs:
       - checkout
       - restore_cache:
           keys: 
-            - back-end-{{ checksum "package.json" }}
+            - back-end-{{ checksum "backend/package.json" }}
       - run:
           name: Scan backend dependencies
           command: |
@@ -169,7 +169,7 @@ jobs:
       - save_cache:
           paths:
             - backend/node_modules  
-          key: back-end-{{ checksum "package.json" }}
+          key: back-end-{{ checksum "backend/package.json" }}
 
 
   audit-frontend:
@@ -179,7 +179,7 @@ jobs:
       - checkout
       - restore_cache:
           keys: 
-            - front-end-{{ checksum "package.json" }}
+            - front-end-{{ checksum "frontend/package.json" }}
       - run:
           name: Scan frontend dependencies
           command: |
@@ -190,7 +190,7 @@ jobs:
       - save_cache:
           paths:
             - frontend/node_modules  
-          key: front-end-{{ checksum "package.json" }}
+          key: front-end-{{ checksum "frontend/package.json" }}
 # =================================================================================================
 # INFRASTRUCTURE 
 
@@ -237,7 +237,7 @@ jobs:
       - checkout
       - restore_cache:
           keys: 
-            - back-end-{{ checksum "package.json" }}
+            - back-end-{{ checksum "backend/package.json" }}
 
       - run: apk add tar gzip
       - attach_workspace:
@@ -261,7 +261,7 @@ jobs:
       - checkout
       - restore_cache:
           keys: 
-            - back-end-{{ checksum "package.json" }}
+            - back-end-{{ checksum "backend/package.json" }}
       - run:
           name: Install dependencies
           command: |
@@ -284,7 +284,7 @@ jobs:
       - checkout
       - restore_cache:
           keys: 
-            - back-end-{{ checksum "package.json" }}
+            - back-end-{{ checksum "backend/package.json" }}
 
       - run: apk add tar gzip
       - attach_workspace:
@@ -311,7 +311,7 @@ jobs:
       - checkout
       - restore_cache:
           keys: 
-            - back-end-{{ checksum "package.json" }}
+            - front-end-{{ checksum "frontend/package.json" }}
       - run:
           name: Install dependencies
           command: |
