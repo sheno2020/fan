@@ -72,7 +72,6 @@ jobs:
           name: Run tests with JUnit as reporter
           command: |
             cd backend
-            npm i
             npm add --dev jest-junit
             npm run test --reporters=jest-junit
      
@@ -100,7 +99,6 @@ jobs:
           name: Run tests with JUnit as reporter
           command: |
             cd frontend
-            npm i
             npm add --dev jest-junit
             npm run test --reporters=jest-junit
       
@@ -133,7 +131,6 @@ jobs:
           name: Scan backend dependencies
           command: |
             cd backend
-            npm i
             npm audit --audit-level=critical
 
 
@@ -149,9 +146,56 @@ jobs:
           name: Scan frontend dependencies
           command: |
             cd frontend
-            npm i
             npm audit --audit-level=critical
 
+# =================================================================================================
+# INFRASTRUCTURE 
+
+
+  deploy-infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: create backend infrastructure 
+          command: |
+            aws cloudformation deploy --template-file .circleci/files/backend.yml --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" --parameter-overrides ID="backend-${CIRCLE_WORKFLOW_ID:0:7}"
+            
+      - run:
+          name: create frontend infrastructure
+          command: |
+            aws cloudformation deploy --template-file .circleci/files/frontend.yml --stack-name "frontend-${CIRCLE_WORKFLOW_ID:0:7}" --parameter-overrides ID="frontend-${CIRCLE_WORKFLOW_ID:0:7}"
+      - run:
+          name: get public IP of EC2 instance created
+          command: |
+            echo "[all]" > inventory
+            aws cloudformation describe-stacks --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" --query "Stacks[0].Outputs[?OutputKey==\`DNSName\`].OutputValue" --output text >> inventory
+      - run: yum install -y tar gzip
+      - persist_to_workspace:
+          root: ./
+          paths:
+            - ./inventory
+
+
+  configure-infrastructure:
+    docker:
+    - image: python:3.7-alpine3.11
+    steps:
+      - add_ssh_keys:
+          fingerprints: [4b:f1:26:7f:1d:41:42:74:00:af:56:b0:10:e8:b0:e8]
+      - checkout
+      - run: apk add tar gzip
+      - attach_workspace:
+          at: ./
+      - run:
+          name: Install ansible
+          command: | 
+            apk add --update ansible 
+      - run: 
+          name: Configure server using ansible playbook
+          command: ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory .circleci/ansible/configure.yml
+      - destroy_backend_stack
 
 
 workflows:
@@ -173,6 +217,12 @@ workflows:
       - audit-frontend:
           requires:
             - frontend_tests
+
+      - deploy-infrastructure:
+          requires:
+            - audit-backend
+            - audit-frontend
+
       
 
 
