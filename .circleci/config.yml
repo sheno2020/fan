@@ -184,6 +184,7 @@ jobs:
           name: Scan frontend dependencies
           command: |
             cd frontend
+            nmp i
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
       
