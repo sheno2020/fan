@@ -3,14 +3,13 @@ version: 2.1
 orbs:
   slack: circleci/slack@3.4.2
 
-# commands:
-#   slack-notify:  
-#     steps:
-#       - slack/notify:
-#           color: "#42e2f4"
-#           mentions: "ozayr,"
-#           message: just a message
-#           fail_only: true
+commands:
+  slack-notify:  
+    steps:
+      - slack/status:
+          channel: cicd-pipeline
+          mentions: "ozayr,"
+          fail_only: true
 
 jobs:
 # =========================================================================================================
@@ -112,10 +111,7 @@ jobs:
             - frontend/node_modules  
           key: front-end
 
-      - slack/status:
-          channel: cicd-pipeline
-          mentions: "ozayr,"
-          fail_only: true
+      - slack-notify
           
 # =========================================================================================================
 # ANALYZE
@@ -164,7 +160,7 @@ jobs:
           name: create backend infrastructure 
           command: |
             aws cloudformation deploy --template-file .circleci/files/backend.yml --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" --parameter-overrides ID="backend-${CIRCLE_WORKFLOW_ID:0:7}"
-            
+    
       - run:
           name: create frontend infrastructure
           command: |
@@ -180,6 +176,7 @@ jobs:
           paths:
             - ./inventory
 
+      - slack-notify
 
   configure-infrastructure:
     docker:
