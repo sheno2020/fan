@@ -35,6 +35,8 @@
 
 - name: Copy index test page
   copy:
-    src: "~/project/backend/dist/"
+    src: "dist/"
     dest: "~/web"
+
+
 
