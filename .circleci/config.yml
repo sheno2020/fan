@@ -246,8 +246,9 @@ jobs:
       - run:
           name: Install dependencies and run build to generate dist folder to copy into remote server 
           command: | 
-            apk add --update ansible nodejs npm && \
-            cd backend && \
+            apk add --update ansible nodejs npm 
+            cd backend 
+            npm i  
             npm run build 
       - run: 
           name: Configure server using ansible playbook
