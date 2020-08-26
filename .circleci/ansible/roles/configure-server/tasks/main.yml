@@ -33,6 +33,10 @@
     path: ~/app
     state: directory
 
+- name:
+  become: yes
+  shell: |
+    apt install -y rsync
 
 - name: copy ditribution folder to remote server
   become: yes
