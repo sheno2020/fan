@@ -255,7 +255,7 @@ jobs:
             cp -rv dist/*  ../.circleci/ansible/roles/configure-server/files/dist
 
       - run: ls .circleci/ansible/roles/configure-server/files/dist
-      - run: apk update && apk add --upgrade rsync
+      - run: apk update && apk add --upgrade rsync openssh && which rsync
       - run: 
           name: Configure server using ansible playbook
           command: ansible-playbook -i inventory .circleci/ansible/configure_backend.yml
