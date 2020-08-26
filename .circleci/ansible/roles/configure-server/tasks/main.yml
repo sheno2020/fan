@@ -33,17 +33,10 @@
     path: ~/web
     state: directory
 
-- name: "Installing Rsync"
-  apt: >
-    pkg={{ item }}
-    state=latest
-    update_cache=yes
-    cache_valid_time=3600
-  with_items:
-  - rsync
 
 - name: copy ditribution folder to remote server
-  synchronize:
+  become: yes
+  copy:
     src: "files/dist/"
     dest: "~/web"
     
