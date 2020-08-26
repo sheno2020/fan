@@ -36,7 +36,7 @@
 
 - name: copy ditribution folder to remote server
   become: yes
-  copy:
+  synchronize:
     src: dist
     dest: ~/app
   register: copy_output
