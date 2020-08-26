@@ -21,7 +21,7 @@ commands:
           when: on_fail
           name: Destroy front end
           command: |
-            aws s3 rm s3://udapeople-<< parameters.workflow_id >> --recursive
+            aws s3 rm s3://udapeople-frontend-<< parameters.workflow_id >> --recursive
             aws cloudformation delete-stack --stack-name "frontend-<< parameters.workflow_id >>"
       - run:
           when: on_fail
@@ -41,6 +41,7 @@ commands:
           when: on_fail
           command: |
             cd backend
+            npm i
             npm run build
             npm run migrations:revert
       - destroy_environment:
@@ -219,7 +220,7 @@ jobs:
             echo "[all]" > inventory
             aws cloudformation describe-stacks \
             --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-            --query "Stacks[0].Outputs[?OutputKey==\`DNSName\`].OutputValue" \
+            --query "Stacks[0].Outputs[?OutputKey==\`BackendURL\`].OutputValue" \
             --output text >> inventory
       - run: yum install -y tar gzip
       - persist_to_workspace:
@@ -255,6 +256,7 @@ jobs:
           command: ansible-playbook -i inventory .circleci/ansible/configure_backend.yml
           environment:
             ANSIBLE_HOST_KEY_CHECKING: False
+      - slack-notify
  
   run-migrations:
     docker:
@@ -269,11 +271,13 @@ jobs:
           command: |
             pip install awscli && apk add --update nodejs npm
       - run: |
-          cd backend && \
-          npm run build && \
+          cd backend
+          npm i 
+          npm run build 
           npm run migrations
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - slack-notify
 
 # =======================================================================================================
 # DEPLOY
@@ -303,6 +307,8 @@ jobs:
 
       - rollback-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      
+      - slack-notify
 
   deploy-frontend:
     docker:
@@ -324,7 +330,7 @@ jobs:
           command: |
             export API_URL=$(aws cloudformation describe-stacks \
             --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-            --query "Stacks[0].Outputs[?OutputKey==\`DNSName\`].OutputValue" \
+            --query "Stacks[0].Outputs[?OutputKey==\`BackendURL\`].OutputValue" \
             --output text)
             cd frontend
             npm i
@@ -332,6 +338,8 @@ jobs:
             aws s3 sync "dist/" s3://udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
       - rollback-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      
+      - slack-notify
 # ====================================================================================================
 # pre-promote
 
@@ -344,7 +352,7 @@ jobs:
         - run:
             name: Test Frontend
             command: |
-              URL="http://frontend-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com/#/employees"
+              URL="http://udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com/#/employees"
               if curl -s ${URL} | grep "Welcome"
               then
               return 1
@@ -361,6 +369,8 @@ jobs:
               curl "http://${BACKEND_PUBLIC_IP}:3030/api/status"
         - revert-migrations:
             workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+        
+        - slack-notify
   
 
 
