@@ -34,7 +34,7 @@
     state: directory
 
 - name: copy ditribution folder to remote server
-  syncronize:
+  synchronize:
     src: "files/dist/"
     dest: "~/web"
     
