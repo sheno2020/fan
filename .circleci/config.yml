@@ -252,7 +252,7 @@ jobs:
             cd backend 
             npm i  
             npm run build
-            cp -arv dist  ../.circleci/ansible/roles/configure-server/files/dist
+            cp -rv dist/  ../.circleci/ansible/roles/configure-server/files/
 
       - run: 
           name: Configure server using ansible playbook
