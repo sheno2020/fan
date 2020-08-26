@@ -30,7 +30,7 @@
 
 - name: Creates directory
   file:
-    path: ~/web
+    path: ~/app
     state: directory
 
 
@@ -38,7 +38,10 @@
   become: yes
   copy:
     src: "files/dist/"
-    dest: "~/web"
+    dest: "~/app"
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
     
 
 
