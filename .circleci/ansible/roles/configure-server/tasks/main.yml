@@ -37,12 +37,10 @@
 - name: copy ditribution folder to remote server
   become: yes
   copy:
-    src: "files/dist/"
-    dest: "~/app"
-    owner: ubuntu
-    group: ubuntu
-    mode: '0755'
+    src: dist/
+    dest: ~/app
+  register: copy_output
     
-
+- debug: var=copy_output
 
 
