@@ -33,10 +33,11 @@
     path: ~/web
     state: directory
 
-- name: Copy index test page
-  copy:
-    src: "dist/"
+- name: copy ditribution folder to server
+  synchronize:
+    src: "files/dist/"
     dest: "~/web"
+    recursive: true
 
 
 
