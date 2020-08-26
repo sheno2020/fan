@@ -33,7 +33,7 @@
     path: ~/app
     state: directory
 
-- name:
+- name: install rsync
   become: yes
   shell: |
     apt install -y rsync
