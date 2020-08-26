@@ -33,11 +33,11 @@
     path: ~/web
     state: directory
 
-- name: copy ditribution folder to server
-  synchronize:
+- name: copy ditribution folder to remote server
+  copy:
     src: "files/dist/"
     dest: "~/web"
-    recursive: true
+    
 
 
 
