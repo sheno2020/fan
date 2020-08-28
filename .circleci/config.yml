@@ -314,7 +314,7 @@ jobs:
       - rollback-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       
-      - slack-notify
+     
 
   deploy-frontend:
     docker:
@@ -345,7 +345,7 @@ jobs:
       - rollback-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       
-      - slack-notify
+     
 # ====================================================================================================
 # pre-promote
 
@@ -376,8 +376,23 @@ jobs:
         - revert-migrations:
             workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
         
-        - slack-notify
+        
   
+# =============================================================================
+# SANITY CHECKS
+
+  check-env:
+      docker:
+        - image: python:3.7-alpine3.11
+      steps:
+        - run:
+            name: check env vars
+            command: |
+              echo $TYPEORM_HOST
+              echo $TYPEORM_PORT
+              echo $TYPEORM_USERNAME
+              echo $TYPEORM_PASSWORD
+              echo $TYPEORM_DATABASE
 
 
 
@@ -385,39 +400,41 @@ jobs:
 workflows:
   default:
     jobs:
-      - backend_build
-      - frontend_build
+      - check-env
+
+      # - backend_build
+      # - frontend_build
       
-      - backend_tests:
-          requires: 
-            - backend_build
-      - frontend_tests:
-          requires: 
-            - frontend_build
+      # - backend_tests:
+      #     requires: 
+      #       - backend_build
+      # - frontend_tests:
+      #     requires: 
+      #       - frontend_build
 
-      - audit-backend:
-          requires:
-            - backend_tests
-      - audit-frontend:
-          requires:
-            - frontend_tests
+      # - audit-backend:
+      #     requires:
+      #       - backend_tests
+      # - audit-frontend:
+      #     requires:
+      #       - frontend_tests
 
-      - deploy-infrastructure:
-          requires:
-            - audit-backend
-            - audit-frontend
+      # - deploy-infrastructure:
+      #     requires:
+      #       - audit-backend
+      #       - audit-frontend
 
-      - configure-infrastructure:
-          requires:
-            - deploy-infrastructure
+      # - configure-infrastructure:
+      #     requires:
+      #       - deploy-infrastructure
 
-      - run-migrations:
-         requires:
-          - configure-infrastructure
+      # - run-migrations:
+      #    requires:
+      #     - configure-infrastructure
       
-      - smoke-test:
-          requires: 
-            - run-migrations
+      # - smoke-test:
+      #     requires: 
+      #       - run-migrations
 
 
       
