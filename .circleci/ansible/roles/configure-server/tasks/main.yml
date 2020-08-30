@@ -15,10 +15,9 @@
 
 - name: "install dependencies."
   become: yes
-  apt:
-    name: ["nodejs", "npm"]
-    state: latest
-    update_cache: yes
+  shell: |
+    curl -sL https://deb.nodesource.com/setup_13.x | sudo bash -
+    apt-get install -y nodejs
 
 - name: "install pm2"
   become: yes

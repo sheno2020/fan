@@ -276,20 +276,6 @@ jobs:
           name: Install dependencies
           command: |
             pip install awscli && apk add --update nodejs npm
-      - run:
-          name: Create env file
-          command: |
-            cd backend
-            echo "ENVIRONMENT=production" > .env
-            echo "NODE_ENV=production" >> .env
-            echo "TYPEORM_CONNECTION=$TYPEORM_CONNECTION" >> .env
-            echo "TYPEORM_ENTITIES=$TYPEORM_ENTITIES" >> .env
-            echo "TYPEORM_HOST=$TYPEORM_HOST" >> .env
-            echo "TYPEORM_PORT=$TYPEORM_PORT" >> .env
-            echo "TYPEORM_USERNAME=$TYPEORM_USERNAME" >> .env
-            echo "TYPEORM_PASSWORD=$TYPEORM_PASSWORD" >> .env
-            echo "TYPEORM_DATABASE=$TYPEORM_DATABASE" >> .env
-      
       - run: |
           cd backend
           npm i 
@@ -375,41 +361,28 @@ jobs:
               URL="http://udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com/#/employees"
               if curl -s ${URL} | grep "Welcome"
               then
-              return 1
+              return 0
               else
               return 1
               fi
         - run:
             name: Test Backend
             command: |
-              BACKEND_PUBLIC_IP=$(aws cloudformation describe-stacks \
+              BACKEND_IP=$(aws cloudformation describe-stacks \
               --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --query "Stacks[0].Outputs[?OutputKey==\`DNSName\`].OutputValue" \
               --output text)
-              curl "http://${BACKEND_PUBLIC_IP}:3030/api/status"
+              if curl -s "http://${BACKEND_IP}:3030/api/status" | grep "ok"
+              then
+              return 0
+              else
+              return 1
+              fi
         - revert-migrations:
             workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
         
         
   
-# =============================================================================
-# SANITY CHECKS
-
-  check-env:
-      docker:
-        - image: python:3.7-alpine3.11
-      steps:
-        - run:
-            name: check env vars
-            command: |
-              echo $TYPEORM_HOST
-              echo $TYPEORM_PORT
-              echo $TYPEORM_USERNAME
-              echo $TYPEORM_PASSWORD
-              echo $TYPEORM_DATABASE
-
-
-
 
 workflows:
   default:
@@ -436,18 +409,24 @@ workflows:
           requires:
             - audit-backend
             - audit-frontend
-
       - configure-infrastructure:
           requires:
             - deploy-infrastructure
 
       - run-migrations:
-         requires:
-          - configure-infrastructure
-      
+          requires:
+            - configure-infrastructure
+
+      - deploy-backend:
+          requires:
+            - run-migrations
+      - deploy-frontend:
+          requires:
+            - deploy-backend
+          
       - smoke-test:
           requires: 
-            - run-migrations
+            - deploy-frontend
 
 
       
