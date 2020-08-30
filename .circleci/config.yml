@@ -311,7 +311,7 @@ jobs:
           environment:
             ANSIBLE_HOST_KEY_CHECKING: False 
 
-      - rollback-migrations:
+      - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       
      
@@ -342,7 +342,7 @@ jobs:
             npm i
             npm run build
             aws s3 sync "dist/" s3://udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}
-      - rollback-migrations:
+      - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       
      
