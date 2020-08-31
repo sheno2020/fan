@@ -246,6 +246,19 @@ jobs:
           at: ./
       - run: mkdir -p  .circleci/ansible/roles/configure-server/files/backend
       - run:
+          name: Create env file
+          command: |
+            cd backend
+            echo "ENVIRONMENT=production" > .env
+            echo "NODE_ENV=production" >> .env
+            echo "TYPEORM_CONNECTION=$TYPEORM_CONNECTION" >> .env
+            echo "TYPEORM_ENTITIES=$TYPEORM_ENTITIES" >> .env
+            echo "TYPEORM_HOST=$TYPEORM_HOST" >> .env
+            echo "TYPEORM_PORT=$TYPEORM_PORT" >> .env
+            echo "TYPEORM_USERNAME=$TYPEORM_USERNAME" >> .env
+            echo "TYPEORM_PASSWORD=$TYPEORM_PASSWORD" >> .env
+            echo "TYPEORM_DATABASE=$TYPEORM_DATABASE" >> .env
+      - run:
           name: Install dependencies and run build to generate dist folder to copy into remote server 
           command: | 
             pip install awscli && apk add --update ansible 
