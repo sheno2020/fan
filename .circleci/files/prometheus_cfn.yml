@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  monitoring instance
+
+Resources:
+  instance:
+    Type: "AWS::EC2::Instance"
+    Properties:  
+      ImageId: ami-0a634ae95e11c6f91
+      InstanceType: t2.micro
+      KeyName: testAwsCli
+      SecurityGroups:
+        - !Ref secGroup
+
+  secGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Sec group for ec2 ssh and monitoring access #required
+  
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22 
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 9090
+          ToPort: 9090
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 9090
+          ToPort: 9090
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 9091
+          ToPort: 9091
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 9093
+          ToPort: 9093
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  prometheusDNSName:
+    Value: !GetAtt instance.PublicDnsName
+    Description: DNSName of created prometheus instance

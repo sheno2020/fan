@@ -1,0 +1,17 @@
+global:
+  scrape_interval: 15s
+  external_labels:
+    monitor: 'prometheus'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: 'node'
+    ec2_sd_configs:
+      - region: us-west-2
+        access_key:  AKIAU4D53YVSUNXKVGHA 
+        secret_key: PROM_SECRET_KEY
+        port: 9100
+
+    

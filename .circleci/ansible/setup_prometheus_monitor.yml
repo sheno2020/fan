@@ -1,0 +1,6 @@
+- name: Exercise for setting up a prometheus monitor
+  hosts: overwatch
+  user: ubuntu
+  roles:
+  - setup_prometheus
+  - setup_alertsmanager

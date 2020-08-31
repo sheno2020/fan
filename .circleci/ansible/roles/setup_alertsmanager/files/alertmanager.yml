@@ -1,0 +1,16 @@
+global:
+ resolve_timeout: 1m
+ slack_api_url: 'https://hooks.slack.com/services/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'
+
+route:
+ receiver: 'slack-notifications'
+
+receivers:
+- name: 'slack-notifications'
+  slack_configs:
+  - channel: '#levelup'
+    send_resolved: true
+
+
+
+    

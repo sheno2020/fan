@@ -321,8 +321,8 @@ jobs:
           environment:
             ANSIBLE_HOST_KEY_CHECKING: False 
 
-      # - revert-migrations:
-      #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       
      
 
@@ -348,6 +348,7 @@ jobs:
             --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --query "Stacks[0].Outputs[?OutputKey==\`BackendURL\`].OutputValue" \
             --output text)
+            echo $API_URL
             cd frontend
             npm i
             npm run build
@@ -389,11 +390,78 @@ jobs:
               else
               return 1
               fi
-        # - revert-migrations:
-        #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+        - revert-migrations:
+            workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
         
+
+# ================================================================================================================
+# PROMOTION 
+
+  promote-to-production:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - run: pip install awscli && apk add --update nodejs npm curl
+      - run: |
+          aws cloudformation deploy \
+            --template-file .circleci/files/cloudfront.yml \
+            --stack-name udapeople-distro \
+            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}"
+      - revert-migrations:
+            workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
         
-  
+
+  cleanup-old-deploy:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - run: apk add tar gzip
+      - attach_workspace:
+          at: ./
+      - run: pip install awscli && apk add --update nodejs npm curl
+      - run:
+          name: delete old deployment
+          command: |
+            export OLD_ID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
+            echo $OLD_ID
+            if test -z "$OLD_ID"
+            then
+              echo "congrats!!! first deploy , or we lost the prev deploy ID!!!"
+            else
+              aws cloudformation delete-stack --stack-name backend-${OLD_ID}
+              aws s3 rm s3://udapeople-frontend-${OLD_ID} --recursive
+              aws cloudformation delete-stack --stack-name frontend-${OLD_ID}
+            fi
+      - revert-migrations:
+            workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+
+# ========================================================================================================
+# MONITORING
+
+
+
+  setup-node-exporter:
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: [4b:f1:26:7f:1d:41:42:74:00:af:56:b0:10:e8:b0:e8]
+      - run: apk add tar gzip
+      - attach_workspace:
+          at: ./
+      - run: |
+          apk add --update ansible && \
+          pip install awscli && \
+          apk add --update nodejs npm curl
+      - run:
+          name: Setup prometheus monitoring
+          command: |
+            ansible-playbook -i inventory .circleci/ansible/setup_prometheus_node_exporter.yml 
+      - revert-migrations:
+            workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
 workflows:
   default:

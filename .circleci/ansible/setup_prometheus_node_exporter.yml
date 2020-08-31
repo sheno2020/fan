@@ -1,0 +1,5 @@
+- name: Configure prometheus on backend server
+  hosts: all
+  user: ubuntu
+  roles:
+  - configure-prometheus-node-exporter
