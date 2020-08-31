@@ -1,3 +1,4 @@
 - name: start server
+  become: yes
   shell: |
-    pm2 start ~/app/dist/main.js -f
+    pm2 start ~/app/backend/dist/main.js 

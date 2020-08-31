@@ -244,17 +244,14 @@ jobs:
       - run: apk add tar gzip
       - attach_workspace:
           at: ./
-      - run: mkdir -p  .circleci/ansible/roles/configure-server/files/dist
+      - run: mkdir -p  .circleci/ansible/roles/configure-server/files/backend
       - run:
           name: Install dependencies and run build to generate dist folder to copy into remote server 
           command: | 
             pip install awscli && apk add --update ansible nodejs npm 
-            cd backend 
-            npm i  
-            npm run build
-            cp -rv dist/*  ../.circleci/ansible/roles/configure-server/files/dist
+            cp -rv backend/*  ../.circleci/ansible/roles/configure-server/files/backend
 
-      - run: ls .circleci/ansible/roles/configure-server/files/dist
+      - run: ls .circleci/ansible/roles/configure-server/files/backend
       - run: apk update && apk add --upgrade rsync openssh 
       - run: 
           name: Configure server using ansible playbook

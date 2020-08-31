@@ -15,10 +15,11 @@
 
 - name: "install dependencies."
   become: yes
-  shell: |
-    curl -sL https://deb.nodesource.com/setup_13.x | sudo bash -
-    apt-get install -y nodejs
-
+  apt:
+    name: ["nodejs", "npm"]
+    state: latest
+    update_cache: yes
+    
 - name: "install pm2"
   become: yes
   npm:
@@ -40,10 +41,20 @@
 - name: copy ditribution folder to remote server
   become: yes
   synchronize:
-    src: dist
+    src: backend
     dest: ~/app
   register: copy_output
     
 - debug: var=copy_output
+
+- name: build backend application
+  become: yes
+  shell: |
+    cd backend
+    npm i 
+    npm run build
+
+
+
 
 
