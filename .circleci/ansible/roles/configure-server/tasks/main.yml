@@ -50,7 +50,7 @@
 - name: build backend application
   become: yes
   shell: |
-    cd backend
+    cd app/backend/
     npm i 
     npm run build
 
