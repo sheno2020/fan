@@ -249,7 +249,7 @@ jobs:
           name: Install dependencies and run build to generate dist folder to copy into remote server 
           command: | 
             pip install awscli && apk add --update ansible nodejs npm 
-            cp -rv backend/*  ../.circleci/ansible/roles/configure-server/files/backend
+            cp -rv backend/*  .circleci/ansible/roles/configure-server/files/backend
 
       - run: ls .circleci/ansible/roles/configure-server/files/backend
       - run: apk update && apk add --upgrade rsync openssh 
