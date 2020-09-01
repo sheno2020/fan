@@ -401,12 +401,8 @@ jobs:
               --query "Stacks[0].Outputs[?OutputKey==\`BackendURL\`].OutputValue" \
               --output text)
               echo ${BACKEND_IP}
-              if curl -s "http://${BACKEND_IP}:3030/api/status" | grep "ok"
-              then
-              return 0
-              else
-              return 1
-              fi
+              curl "http://${BACKEND_IP}:3030/api/status" 
+              
         - revert-migrations:
             workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
         
@@ -547,6 +543,17 @@ workflows:
       - smoke-test:
           requires: 
             - deploy-frontend
+      
+      - configure-overwatch:
+          requires:
+            - smoke-test
+      - setup-node-exporter:
+          requires:
+            - smoke-test
+
+      - promote-to-production:
+          requires:
+            - smoke-test
 
 
       
