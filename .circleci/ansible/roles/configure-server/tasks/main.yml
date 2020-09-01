@@ -43,7 +43,9 @@
 - name: make env file
   become: yes
   shell: |
-    cd backend 
+    cd backend
+    cp env .env 
+    rm env  
     cat .env
   register: env_output
   
