@@ -1,4 +1,5 @@
 - name: start server
   become: yes
   shell: |
-    cd backend && npm run start
+    cd backend
+    npm run start > server_logs.out &

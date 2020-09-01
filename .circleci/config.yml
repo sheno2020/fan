@@ -420,11 +420,13 @@ jobs:
     steps:
       - checkout
       - run: pip install awscli && apk add --update nodejs npm curl
-      - run: |
-          aws cloudformation deploy \
-            --template-file .circleci/files/cloudfront.yml \
-            --stack-name udapeople-distro \
-            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}"
+      - run:
+          name: Update cloudfront distribution
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/cloudfront.yml \
+              --stack-name udapeople-distro \
+              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migrations:
             workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
         
