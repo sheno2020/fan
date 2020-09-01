@@ -2,7 +2,7 @@
   become: yes
   shell: |
     cd backend
-    (npm run start&) && sleep 5
+    pm2 --name server start npm -- start 
   register: start_output
   
 - debug: var=start_output
