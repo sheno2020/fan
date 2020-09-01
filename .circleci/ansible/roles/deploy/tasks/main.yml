@@ -3,3 +3,6 @@
   shell: |
     cd backend
     (npm run start&)
+  register: start_output
+  
+- debug: var=start_output
