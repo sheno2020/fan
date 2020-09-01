@@ -2,4 +2,4 @@
   become: yes
   shell: |
     cd backend
-    npm run start > server_logs.out &
+    (npm run start&)
