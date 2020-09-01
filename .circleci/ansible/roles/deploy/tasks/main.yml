@@ -1,5 +1,4 @@
 - name: start server
   become: yes
   shell: |
-    # pm2 start /home/ubuntu/backend/dist/main.js 
     cd backend && npm run start

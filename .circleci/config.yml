@@ -222,6 +222,22 @@ jobs:
             --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --query "Stacks[0].Outputs[?OutputKey==\`BackendURL\`].OutputValue" \
             --output text >> inventory
+
+      - run:
+          name: create Monitoring infrastructure
+          command: |
+            aws cloudformation deploy --template-file .circleci/files/prometheus_cfn.yml \
+            --stack-name "prometheus-overwatch"
+      - run:
+          name: get public IP of overwatch
+          command: |
+            echo "[overwatch]" >> inventory
+            aws cloudformation describe-stacks \
+            --stack-name "prometheus-overwatch" \
+            --query "Stacks[0].Outputs[?OutputKey==\`prometheusDNSName\`].OutputValue" \
+            --output text >> inventory    
+
+        
       - run: yum install -y tar gzip
       - persist_to_workspace:
           root: ./
@@ -245,19 +261,6 @@ jobs:
       - attach_workspace:
           at: ./
       - run: mkdir -p  .circleci/ansible/roles/configure-server/files/backend
-      - run:
-          name: Create env file
-          command: |
-            cd backend
-            echo "ENVIRONMENT=production" > .env
-            echo "NODE_ENV=production" >> .env
-            echo "TYPEORM_CONNECTION=$TYPEORM_CONNECTION" >> .env
-            echo "TYPEORM_ENTITIES=$TYPEORM_ENTITIES" >> .env
-            echo "TYPEORM_HOST=$TYPEORM_HOST" >> .env
-            echo "TYPEORM_PORT=$TYPEORM_PORT" >> .env
-            echo "TYPEORM_USERNAME=$TYPEORM_USERNAME" >> .env
-            echo "TYPEORM_PASSWORD=$TYPEORM_PASSWORD" >> .env
-            echo "TYPEORM_DATABASE=$TYPEORM_DATABASE" >> .env
       - run:
           name: Install dependencies and run build to generate dist folder to copy into remote server 
           command: | 
@@ -321,8 +324,8 @@ jobs:
           environment:
             ANSIBLE_HOST_KEY_CHECKING: False 
 
-      - revert-migrations:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      # - revert-migrations:
+      #     workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       
      
 
@@ -439,7 +442,29 @@ jobs:
 
 # ========================================================================================================
 # MONITORING
-
+  configure-overwatch:
+    docker:
+    - image: python:3.7-alpine3.11
+    steps:
+      - add_ssh_keys:
+          fingerprints: [4b:f1:26:7f:1d:41:42:74:00:af:56:b0:10:e8:b0:e8]
+      - checkout
+      - run: apk add tar gzip
+      - attach_workspace:
+          at: ./
+      - run:
+          name: Install dependencies and run build to generate dist folder to copy into remote server 
+          command: | 
+            pip install awscli && apk add --update ansible 
+      - run: |
+          sed -i "s/PROM_SECRET_KEY/$PROM_SECRET_ACCESS/g" .circleci/ansible/roles/setup_prometheus/files/prometheus.yml
+          sed -i "s/SLACK_WEBHOOK/$SLACK_WEBHOOK/g" .circleci/ansible/roles/setup_alertsmanager/files/alertmanager.yml
+      - run: 
+          name: Configure overwatch server using ansible playbook
+          command: ansible-playbook -i inventory .circleci/ansible/setup_prometheus_monitor.yml
+          environment:
+            ANSIBLE_HOST_KEY_CHECKING: False
+    
 
 
   setup-node-exporter:
