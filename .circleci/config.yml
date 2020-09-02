@@ -470,8 +470,8 @@ jobs:
           command: | 
             pip install awscli && apk add --update ansible 
       - run: |
-          sed -i "s/PROM_SECRET_KEY/$PROM_SECRET_ACCESS/g" .circleci/ansible/roles/setup_prometheus/files/prometheus.yml
-          sed -i "s/SLACK_WEBHOOK/$SLACK_WEBHOOK/g" .circleci/ansible/roles/setup_alertsmanager/files/alertmanager.yml
+          sed -i "s|PROM_SECRET_KEY|$PROM_SECRET_ACCESS|g" .circleci/ansible/roles/setup_prometheus/files/prometheus.yml
+          sed -i "s|SLACK_WEBHOOK|$SLACK_WEBHOOK|g" .circleci/ansible/roles/setup_alertsmanager/files/alertmanager.yml
       - run: 
           name: Configure overwatch server using ansible playbook
           command: ansible-playbook -i inventory .circleci/ansible/setup_prometheus_monitor.yml
@@ -497,7 +497,9 @@ jobs:
       - run:
           name: Setup prometheus monitoring
           command: |
-            ansible-playbook -i inventory .circleci/ansible/setup_prometheus_node_exporter.yml 
+            ansible-playbook -i inventory .circleci/ansible/setup_prometheus_node_exporter.yml
+          environment:
+            ANSIBLE_HOST_KEY_CHECKING: False 
       - revert-migrations:
             workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
@@ -526,6 +528,9 @@ workflows:
           requires:
             - audit-backend
             - audit-frontend
+          filters:
+            branches:
+              only: master
       - configure-infrastructure:
           requires:
             - deploy-infrastructure
@@ -555,7 +560,9 @@ workflows:
       - promote-to-production:
           requires:
             - smoke-test
-
+      - cleanup-old-deploy:
+          requires:
+            - promote-to-production
 
       
 
