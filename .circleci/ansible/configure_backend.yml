@@ -1,5 +1,5 @@
 - name: Configure backend server
-  hosts: all
+  hosts: server
   user: ubuntu
   environment:
     ENVIRONMENT: production

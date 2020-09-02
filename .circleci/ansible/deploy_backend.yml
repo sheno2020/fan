@@ -1,5 +1,5 @@
 - name: deploy backend server
-  hosts: all
+  hosts: server
   user: ubuntu
   roles:
     - deploy
