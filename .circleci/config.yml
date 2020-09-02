@@ -223,7 +223,8 @@ jobs:
             --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --query "Stacks[0].Outputs[?OutputKey==\`BackendURL\`].OutputValue" \
             --output text >> inventory
-
+   
+   
       - run:
           name: create Monitoring infrastructure
           command: |
