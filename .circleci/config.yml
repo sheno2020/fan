@@ -498,17 +498,17 @@ workflows:
       - backend_build
       - frontend_build
       
-       - backend_tests:
+      - backend_tests:
            requires: 
              - backend_build
-       - frontend_tests:
+      - frontend_tests:
            requires: 
              - frontend_build
 
-       - audit-backend:
+      - audit-backend:
            requires:
              - backend_tests
-       - audit-frontend:
+      - audit-frontend:
            requires:
              - frontend_tests
 
