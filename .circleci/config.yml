@@ -1,15 +1,15 @@
 version: 2.1
 
-orbs:
-  slack: circleci/slack@3.4.2
+#orbs:
+#  slack: circleci/slack@3.4.2
 
 commands:
-  slack-notify:  
-    steps:
-      - slack/status:
-          channel: cicd-pipeline
-          mentions: "ozayr,"
-          fail_only: true
+  #slack-notify:  
+  #  steps:
+  #    - slack/status:
+  #        channel: cicd-pipeline
+  #        mentions: "ozayr,"
+  #        fail_only: true
 
   destroy_environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
@@ -150,7 +150,7 @@ jobs:
             - frontend/node_modules  
           key: front-end-{{ checksum "frontend/package.json" }}
 
-      - slack-notify
+     # - slack-notify
           
 # =========================================================================================================
 # ANALYZE
@@ -246,14 +246,14 @@ jobs:
           paths:
             - ./inventory
 
-      - slack-notify
+     # - slack-notify
 
   configure-infrastructure:
     docker:
     - image: python:3.7-alpine3.11
     steps:
       - add_ssh_keys:
-          fingerprints: [4b:f1:26:7f:1d:41:42:74:00:af:56:b0:10:e8:b0:e8]
+          fingerprints: [b4faec55-30f0-4bf0-bbb4-a722fe314562]
       - checkout
       - restore_cache:
           keys: 
@@ -321,7 +321,7 @@ jobs:
     - image: python:3.7-alpine3.11
     steps:
       - add_ssh_keys:
-          fingerprints: [4b:f1:26:7f:1d:41:42:74:00:af:56:b0:10:e8:b0:e8]
+          fingerprints: [b4faec55-30f0-4bf0-bbb4-a722fe314562]
       - checkout
       - restore_cache:
           keys: 
@@ -350,7 +350,7 @@ jobs:
       - image: python:3.7-alpine3.11
     steps:
       - add_ssh_keys:
-          fingerprints: [4b:f1:26:7f:1d:41:42:74:00:af:56:b0:10:e8:b0:e8]
+          fingerprints: [b4faec55-30f0-4bf0-bbb4-a722fe314562]
       - checkout
       - restore_cache:
           keys: 
@@ -377,176 +377,177 @@ jobs:
       
      
 # ====================================================================================================
-# pre-promote
+# # pre-promote
 
-  smoke-test:
-      docker:
-        - image: python:3.7-alpine3.11
-      steps:
-        - checkout
-        - run: pip install awscli && apk add --update nodejs npm curl
-        - run:
-            name: Test Frontend
-            command: |
-              URL="http://udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com/#/employees"
-              if curl -s ${URL} | grep "Welcome"
-              then
-              return 0
-              else
-              return 1
-              fi
-        - run:
-            name: Test Backend
-            command: |
-              BACKEND_IP=$(aws cloudformation describe-stacks \
-              --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-              --query "Stacks[0].Outputs[?OutputKey==\`BackendURL\`].OutputValue" \
-              --output text)
-              echo ${BACKEND_IP}
-              curl "http://${BACKEND_IP}:3030/api/status" 
+#   smoke-test:
+#       docker:
+#         - image: python:3.7-alpine3.11
+#       steps:
+#         - checkout
+#         - run: pip install awscli && apk add --update nodejs npm curl
+#         - run:
+#             name: Test Frontend
+#             command: |
+#               URL="http://udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-us-west-2.amazonaws.com/#/employees"
+#               if curl -s ${URL} | grep "Welcome"
+#               then
+#               return 0
+#               else
+#               return 1
+#               fi
+#         - run:
+#             name: Test Backend
+#             command: |
+#               BACKEND_IP=$(aws cloudformation describe-stacks \
+#               --stack-name "backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+#               --query "Stacks[0].Outputs[?OutputKey==\`BackendURL\`].OutputValue" \
+#               --output text)
+#               echo ${BACKEND_IP}
+#               curl "http://${BACKEND_IP}:3030/api/status" 
               
-        - revert-migrations:
-            workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+#         - revert-migrations:
+#             workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
         
 
 # ================================================================================================================
-# PROMOTION 
+# # PROMOTION 
 
-  promote-to-production:
-    docker:
-      - image: python:3.7-alpine3.11
-    steps:
-      - checkout
-      - run: pip install awscli && apk add --update nodejs npm curl
-      - run:
-          name: Update cloudfront distribution
-          command: |
-            export OLD_ID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
-            echo $OLD_ID
-            if test -z "$OLD_ID"
-            then
-              echo "congrats!!! first deploy , or we lost the prev deploy ID!!!"
-            else
-              aws cloudformation delete-stack --stack-name backend-${OLD_ID}
-              aws s3 rm s3://udapeople-frontend-${OLD_ID} --recursive
-              aws cloudformation delete-stack --stack-name frontend-${OLD_ID}
-            fi
-            aws cloudformation deploy \
-              --template-file .circleci/files/cloudfront.yml \
-              --stack-name udapeople-distro \
-              --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}"
-      - revert-migrations:
-            workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+#   promote-to-production:
+#     docker:
+#       - image: python:3.7-alpine3.11
+#     steps:
+#       - checkout
+#       - run: pip install awscli && apk add --update nodejs npm curl
+#       - run:
+#           name: Update cloudfront distribution
+#           command: |
+#             export OLD_ID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
+#             echo $OLD_ID
+#             if test -z "$OLD_ID"
+#             then
+#               echo "congrats!!! first deploy , or we lost the prev deploy ID!!!"
+#             else
+#               aws cloudformation delete-stack --stack-name backend-${OLD_ID}
+#               aws s3 rm s3://udapeople-frontend-${OLD_ID} --recursive
+#               aws cloudformation delete-stack --stack-name frontend-${OLD_ID}
+#             fi
+#             aws cloudformation deploy \
+#               --template-file .circleci/files/cloudfront.yml \
+#               --stack-name udapeople-distro \
+#               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}"
+#       - revert-migrations:
+#             workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
         
 
 
 # ========================================================================================================
-# MONITORING
-  configure-overwatch:
-    docker:
-    - image: python:3.7-alpine3.11
-    steps:
-      - add_ssh_keys:
-          fingerprints: [4b:f1:26:7f:1d:41:42:74:00:af:56:b0:10:e8:b0:e8]
-      - checkout
-      - run: apk add tar gzip
-      - attach_workspace:
-          at: ./
-      - run:
-          name: Install dependencies and run build to generate dist folder to copy into remote server 
-          command: | 
-            pip install awscli && apk add --update ansible 
-      - run: |
-          sed -i "s|PROM_SECRET_KEY|$PROM_SECRET_ACCESS|g" .circleci/ansible/roles/setup_prometheus/files/prometheus.yml
-          sed -i "s|SLACK_WEBHOOK|$SLACK_WEBHOOK|g" .circleci/ansible/roles/setup_alertsmanager/files/alertmanager.yml
-      - run: 
-          name: Configure overwatch server using ansible playbook
-          command: ansible-playbook -i inventory .circleci/ansible/setup_prometheus_monitor.yml
-          environment:
-            ANSIBLE_HOST_KEY_CHECKING: False
+# # MONITORING
+#   configure-overwatch:
+#     docker:
+#     - image: python:3.7-alpine3.11
+#     steps:
+#       - add_ssh_keys:
+#           fingerprints: [b4faec55-30f0-4bf0-bbb4-a722fe314562]
+#       - checkout
+#       - run: apk add tar gzip
+#       - attach_workspace:
+#           at: ./
+#       - run:
+#           name: Install dependencies and run build to generate dist folder to copy into remote server 
+#           command: | 
+#             pip install awscli && apk add --update ansible 
+#       - run: |
+#           sed -i "s|PROM_SECRET_KEY|$PROM_SECRET_ACCESS|g" .circleci/ansible/roles/setup_prometheus/files/prometheus.yml
+#           sed -i "s|SLACK_WEBHOOK|$SLACK_WEBHOOK|g" .circleci/ansible/roles/setup_alertsmanager/files/alertmanager.yml
+#       - run: 
+#           name: Configure overwatch server using ansible playbook
+#           command: ansible-playbook -i inventory .circleci/ansible/setup_prometheus_monitor.yml
+#           environment:
+#             ANSIBLE_HOST_KEY_CHECKING: False
     
 
 
-  setup-node-exporter:
-    docker:
-      - image: python:3.7-alpine3.11
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints: [4b:f1:26:7f:1d:41:42:74:00:af:56:b0:10:e8:b0:e8]
-      - run: apk add tar gzip
-      - attach_workspace:
-          at: ./
-      - run: |
-          apk add --update ansible && \
-          pip install awscli && \
-          apk add --update nodejs npm curl
-      - run:
-          name: Setup prometheus monitoring
-          command: |
-            ansible-playbook -i inventory .circleci/ansible/setup_prometheus_node_exporter.yml
-          environment:
-            ANSIBLE_HOST_KEY_CHECKING: False 
-      - revert-migrations:
-            workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-
+  # setup-node-exporter:
+  #   docker:
+  #     - image: python:3.7-alpine3.11
+  #   steps:
+  #     - checkout
+  #     - add_ssh_keys:
+  #         fingerprints: [b4faec55-30f0-4bf0-bbb4-a722fe314562]
+  #     - run: apk add tar gzip
+  #     - attach_workspace:
+  #         at: ./
+  #     - run: |
+  #         apk add --update ansible && \
+  #         pip install awscli && \
+  #         apk add --update nodejs npm curl
+  #     - run:
+  #         name: Setup prometheus monitoring
+  #         command: |
+  #           ansible-playbook -i inventory .circleci/ansible/setup_prometheus_node_exporter.yml
+  #         environment:
+  #           ANSIBLE_HOST_KEY_CHECKING: False 
+  #     - revert-migrations:
+  #           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+          
+            
 workflows:
   default:
     jobs:
     
-      - backend_build
-      - frontend_build
+      # - backend_build
+      # - frontend_build
       
-      - backend_tests:
-          requires: 
-            - backend_build
-      - frontend_tests:
-          requires: 
-            - frontend_build
+      # - backend_tests:
+      #     requires: 
+      #       - backend_build
+      # - frontend_tests:
+      #     requires: 
+      #       - frontend_build
 
-      - audit-backend:
-          requires:
-            - backend_tests
-      - audit-frontend:
-          requires:
-            - frontend_tests
+      # - audit-backend:
+      #     requires:
+      #       - backend_tests
+      # - audit-frontend:
+      #     requires:
+      #       - frontend_tests
 
-      - deploy-infrastructure:
-          requires:
-            - audit-backend
-            - audit-frontend
-          filters:
-            branches:
-              only: master
-      - configure-infrastructure:
-          requires:
-            - deploy-infrastructure
+      # - deploy-infrastructure:
+      #     requires:
+      #     #  - audit-backend
+      #     #  - audit-frontend
+      #     filters:
+      #       branches:
+      #         only: master
+      # - configure-infrastructure:
+      #     requires:
+      #       - deploy-infrastructure
 
-      - run-migrations:
-          requires:
-            - configure-infrastructure
+      # - run-migrations:
+      #     requires:
+      #       - configure-infrastructure
 
-      - deploy-backend:
-          requires:
-            - run-migrations
-      - deploy-frontend:
-          requires:
-            - deploy-backend
+      # - deploy-backend:
+      #     requires:
+      #       - run-migrations
+      # - deploy-frontend:
+      #     requires:
+      #       - deploy-backend
           
-      - smoke-test:
-          requires: 
-            - deploy-frontend
+      # - smoke-test:
+      #     requires: 
+      #       - deploy-frontend
       
-      - configure-overwatch:
-          requires:
-            - smoke-test
-      - setup-node-exporter:
-          requires:
-            - smoke-test
+      # - configure-overwatch:
+      #     requires:
+      #       - smoke-test
+      # - setup-node-exporter:
+      #     requires:
+      #       - smoke-test
 
-      - promote-to-production:
-          requires:
-            - smoke-test
+      # - promote-to-production:
+      #     requires:
+      #       - smoke-test
       
 
       
