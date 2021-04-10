@@ -496,26 +496,26 @@ workflows:
     jobs:
     
       - backend_build
-      - frontend_build
+#      - frontend_build
       
-      - backend_tests:
-           requires: 
-             - backend_build
-      - frontend_tests:
-           requires: 
-             - frontend_build
+#      - backend_tests:
+#           requires: 
+#             - backend_build
+#      - frontend_tests:
+#           requires: 
+#             - frontend_build
 
-      - audit-backend:
-           requires:
-             - backend_tests
-      - audit-frontend:
-           requires:
-             - frontend_tests
+#      - audit-backend:
+#           requires:
+#             - backend_tests
+#      - audit-frontend:
+#           requires:
+#             - frontend_tests
 
       - deploy-infrastructure:
-          requires:
-            - audit-backend
-            - audit-frontend
+#          requires:
+#            - audit-backend
+#            - audit-frontend
           filters:
             branches:
               only: master
@@ -530,9 +530,9 @@ workflows:
       - deploy-backend:
           requires:
             - run-migrations
-      - deploy-frontend:
-          requires:
-            - deploy-backend
+#      - deploy-frontend:
+#          requires:
+#            - deploy-backend
           
       # - smoke-test:
       #     requires: 
