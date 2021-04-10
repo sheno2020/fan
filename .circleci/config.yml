@@ -188,7 +188,7 @@ jobs:
             cd frontend
             npm i
             npm audit fix --audit-level=critical --force
-            npm audit --audit-level=critical
+#            npm audit --audit-level=critical
       
       - save_cache:
           paths:
@@ -498,24 +498,24 @@ workflows:
       - backend_build
       - frontend_build
       
-      # - backend_tests:
-      #     requires: 
-      #       - backend_build
-      # - frontend_tests:
-      #     requires: 
-      #       - frontend_build
+       - backend_tests:
+           requires: 
+             - backend_build
+       - frontend_tests:
+           requires: 
+             - frontend_build
 
-      # - audit-backend:
-      #     requires:
-      #       - backend_tests
-      # - audit-frontend:
-      #     requires:
-      #       - frontend_tests
+       - audit-backend:
+           requires:
+             - backend_tests
+       - audit-frontend:
+           requires:
+             - frontend_tests
 
       - deploy-infrastructure:
           requires:
-          #  - audit-backend
-          #  - audit-frontend
+            - audit-backend
+            - audit-frontend
           filters:
             branches:
               only: master
